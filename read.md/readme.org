@@ -1,0 +1,39 @@
+# Equilibrio.org
+
+Sitio web de captación de leads para la descarga de libros sobre transformación personal, Alquimia Interior y PNL.
+
+## Stack Tecnológico
+- **Frontend:** HTML, CSS, JavaScript (Vanilla)
+- **Hosting:** Vercel
+- **Base de Datos:** Supabase (PostgreSQL)
+- **Email Marketing:** Resend
+
+## Estructura
+- `/public`: Archivos estáticos (HTML, CSS, JS, PDFs, Imágenes)
+- `/api`: Funciones serverless de Vercel
+- `/lib`: Configuración de clientes de servicios externos
+
+## Despliegue en Vercel
+1. Conectar este repositorio a Vercel.
+2. Configurar las siguientes Variables de Entorno en Vercel:
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `RESEND_API_KEY`
+3. Asegurarse de que los archivos `libro1-alquimia-interior.pdf` y `libro2-mente-maestra.pdf` estén en la carpeta `/public`.
+
+## Base de Datos (Supabase)
+Ejecutar el siguiente SQL en el editor de Supabase para crear la tabla:
+```sql
+CREATE TABLE suscriptores (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    fecha_nacimiento DATE NOT NULL,
+    edad INTEGER NOT NULL,
+    pais TEXT NOT NULL,
+    fecha_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    email_enviado BOOLEAN DEFAULT FALSE
+);
+ALTER TABLE suscriptores ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Permitir inserciones públicas" ON suscriptores FOR INSERT WITH CHECK (true);
+```
