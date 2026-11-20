@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Binaural Premium | Equilibrioalfa.org</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Merriweather:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root{
+            --primary:#B8860B; --secondary:#1B3A57; --accent:#6B4C7A;
+            --bg:#FAF8F5; --text:#2C2C2C; --muted:#6b6b6b;
+            --ok:#2d7a3a; --err:#c0392b; --line:#E0D8C8;
+        }
+        body{font-family:'Merriweather',Georgia,serif;background:var(--bg);color:var(--text);line-height:1.65;margin:0;}
+        .page-header{background:linear-gradient(135deg,var(--secondary),#0F2337);color:#fff;padding:70px 20px 55px;text-align:center;position:relative;overflow:hidden;}
+        .page-header h1{font-family:'Cinzel',serif;color:#fff;margin:0 0 12px;font-size:2.4rem;letter-spacing:1px;}
+        .page-header p{font-size:1.15rem;opacity:.9;max-width:680px;margin:0 auto;}
+        .content{max-width:920px;margin:0 auto;padding:50px 20px 80px;}
+
+        /* Stepper */
+        .stepper{display:flex;align-items:center;justify-content:center;gap:0;margin:0 auto 45px;max-width:560px;}
+        .step{display:flex;flex-direction:column;align-items:center;gap:8px;flex:0 0 auto;}
+        .step .dot{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-weight:700;background:#fff;border:2px solid var(--line);color:var(--muted);transition:.35s;}
+        .step.active .dot{border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(184,134,11,.12);}
+        .step.done .dot{background:var(--primary);border-color:var(--primary);color:#fff;}
+        .step .lbl{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+        .step-line{flex:1;height:2px;background:var(--line);margin:0 8px 26px;transition:.35s;}
+        .step-line.fill{background:var(--primary);}
+
+        /* Cards */
+        .card{background:#fff;border-radius:14px;padding:30px;box-shadow:0 6px 26px rgba(27,58,87,.07);border-top:3px solid var(--primary);margin-bottom:26px;transition:box-shadow .3s;}
+        .card:hover{box-shadow:0 10px 34px rgba(27,58,87,.12);}
+        .card h2{font-family:'Cinzel',serif;color:var(--secondary);font-size:1.3rem;margin:0 0 18px;display:flex;align-items:center;gap:10px;}
+        .badge-opt{background:var(--accent);color:#fff;font-size:.7rem;padding:3px 9px;border-radius:20px;font-family:'Merriweather';font-weight:400;}
+        .field{margin-bottom:18px;}
+        .field label{display:block;font-weight:700;color:var(--secondary);margin-bottom:7px;font-size:.95rem;}
+        .field select,.field input{width:100%;padding:11px 13px;border:2px solid var(--line);border-radius:8px;font:inherit;background:#fff;transition:.2s;box-sizing:border-box;}
+        .field select:focus,.field input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(184,134,11,.1);}
+        .hint{font-size:.85rem;color:var(--accent);background:#F4F0FA;padding:11px 15px;border-radius:8px;border-left:3px solid var(--accent);margin-top:8px;}
+        .hint::before{content:"💡 ";}
+
+        /* Visualizer */
+        .viz-wrap{background:linear-gradient(180deg,#0F2337,#1B3A57);border-radius:12px;padding:14px;margin:6px 0 18px;position:relative;}
+        .viz-wrap canvas{width:100%;height:120px;display:block;}
+        .viz-legend{display:flex;gap:18px;justify-content:center;margin-top:8px;font-size:.75rem;color:#cdd6e0;font-family:'JetBrains Mono',monospace;}
+        .viz-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+
+        /* Buttons */
+        .btn{border:none;border-radius:9px;padding:14px 26px;font:700 1rem 'Merriweather';cursor:pointer;width:100%;transition:.25s;box-sizing:border-box;}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.12);}
+        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+        .btn-gold{background:linear-gradient(135deg,var(--primary),#9a7009);color:#fff;}
+        .btn-rec{background:linear-gradient(135deg,var(--err),#922b21);color:#fff;font-size:1.05rem;}
+        .btn-rec.rec{animation:pulse 1.4s infinite;}
+        .btn-dl{background:linear-gradient(135deg,var(--ok),#1e5c2a);color:#fff;margin-top:12px;}
+        .btn-mix{background:linear-gradient(135deg,var(--accent),#4a3356);color:#fff;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+        .status{margin-top:14px;text-align:center;font-style:italic;min-height:22px;font-size:.92rem;}
+        .s-ok{color:var(--ok)} .s-err{color:var(--err)} .s-info{color:var(--secondary)}
+
+        .preview{margin-top:16px;padding:15px;background:#f6f4ef;border-radius:10px;display:none;}
+        .preview.show{display:block;animation:fade .4s;}
+        @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+        .preview audio{width:100%;margin-top:8px;}
+        .preview .meta{font-size:.8rem;color:var(--muted);margin-top:5px;font-family:'JetBrains Mono',monospace;}
+
+        /* Timer */
+        .timer{text-align:center;margin:18px 0;}
+        .timer .num{font-family:'JetBrains Mono',monospace;font-size:2.6rem;font-weight:700;color:var(--secondary);}
+        .timer .bar{height:8px;background:#e8e4db;border-radius:5px;overflow:hidden;margin-top:10px;}
+        .timer .bar>div{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .1s linear;}
+        .timer .msg{font-size:.85rem;color:var(--accent);margin-top:8px;}
+
+        .script{background:#FFF8E7;border:2px solid var(--primary);border-radius:10px;padding:20px;margin:18px 0;}
+        .script h3{font-family:'Cinzel',serif;color:var(--primary);margin-top:0;}
+        .script .ex{font-style:italic;background:#fff;padding:9px 12px;border-left:3px solid var(--primary);border-radius:0 6px 6px 0;margin:8px 0;}
+        .info-box{background:#FFF8E7;border-left:5px solid var(--primary);padding:26px 28px;border-radius:0 10px 10px 0;margin-bottom:40px;}
+        .info-box h2{font-family:'Cinzel',serif;color:var(--secondary);margin-top:0;}
+        .info-box ul{line-height:1.8;}
+        .choice{background:#E8F5E9;border-left:4px solid var(--ok);padding:14px 18px;border-radius:8px;margin:14px 0;font-size:.95rem;}
+
+        /* Videos */
+        .vgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;margin-top:24px;}
+        .vcard{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,.07);transition:.3s;}
+        .vcard:hover{transform:translateY(-4px);}
+        .vwrap{position:relative;padding-bottom:56.25%;height:0;background:#000;}
+        .vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+        .vinfo{padding:14px 16px;}
+        .vinfo h3{font-size:.98rem;color:var(--secondary);margin:0 0 4px;}
+        .vinfo p{font-size:.82rem;color:var(--muted);margin:0;}
+
+        /* Sub */
+        .sub{text-align:center;border:2px solid var(--primary);border-radius:16px;padding:36px;max-width:520px;margin:0 auto 50px;box-shadow:0 10px 36px rgba(184,134,11,.15);}
+        .sub h2{font-family:'Cinzel',serif;color:var(--secondary);}
+        .sub .price{font-family:'JetBrains Mono',monospace;font-size:2.8rem;font-weight:700;color:var(--primary);margin:14px 0;}
+        .sub .price span{font-size:1rem;color:var(--muted);font-weight:400;}
+        .sub ul{list-style:none;padding:0;margin:24px 0;text-align:left;}
+        .sub li{padding:9px 0;border-bottom:1px solid #eee;}
+        .sub li::before{content:"✅ ";}
+        .btn-mp{background:#009EE3;color:#fff;font-size:1.15rem;padding:16px;border-radius:10px;text-decoration:none;display:block;font-weight:700;transition:.25s;}
+        .btn-mp:hover{background:#007eb5;transform:translateY(-2px);}
+
+        /* Navbar light */
+        .navbar{position:sticky;top:0;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);box-shadow:0 2px 12px rgba(0,0,0,.06);z-index:50;padding:14px 0;}
+        .navbar .wrap{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center;}
+        .brand{font-family:'Cinzel',serif;font-weight:700;color:var(--secondary);font-size:1.25rem;display:flex;gap:8px;align-items:center;}
+        .brand .star{color:var(--primary);}
+        .nav a{color:var(--text);text-decoration:none;margin-left:26px;font-size:.95rem;transition:.2s;}
+        .nav a:hover{color:var(--primary);}
+        .nav a.cta{background:var(--primary);color:#fff;padding:9px 18px;border-radius:6px;}
+        footer{background:var(--secondary);color:#fff;text-align:center;padding:26px;font-size:.9rem;}
+    </style>
+</head>
+<body>
+
+<nav class="navbar"><div class="wrap">
+    <div class="brand"><span class="star">✦</span> Equilibrioalfa.org</div>
+    <div class="nav">
+        <a href="index.html">Inicio</a>
+        <a href="index.html#libros">Libros</a>
+        <a href="binaural.html" class="cta">Audio Binaural</a>
+    </div>
+</div></nav>
+
+<header class="page-header">
+    <h1>⚗️ Laboratorio de Audio Binaural</h1>
+    <p>Reprograma tu mente con frecuencias diseñadas y tus propias sugestiones de PNL.</p>
+</header>
+
+<div class="content">
+
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+        <div class="step active" data-step="1"><div class="dot">1</div><div class="lbl">Ondas</div></div>
+        <div class="step-line"></div>
+        <div class="step" data-step="2"><div class="dot">2</div><div class="lbl">Tu voz</div></div>
+        <div class="step-line"></div>
+        <div class="step" data-step="3"><div class="dot">3</div><div class="lbl">Descarga</div></div>
+    </div>
+
+    <!-- Texto explicativo -->
+    <div class="info-box">
+        <h2>🧠 Cómo hacer efectivo tu mensaje</h2>
+        <ul>
+            <li><strong>Presente:</strong> "Soy tranquilo", no "Seré tranquilo".</li>
+            <li><strong>Positivo:</strong> "Estoy en calma", no "No tengo ansiedad".</li>
+            <li><strong>Emoción:</strong> siente las palabras al grabarlas.</li>
+            <li><strong>Breve:</strong> 10–30 s de una frase potente repetida.</li>
+            <li><strong>Auriculares:</strong> obligatorios para el efecto binaural.</li>
+        </ul>
+    </div>
+
+    <!-- PASO 1 -->
+    <div class="card" id="card1">
+        <h2>Configura tus Ondas</h2>
+        <div class="viz-wrap">
+            <canvas id="waveCanvas"></canvas>
+            <div class="viz-legend">
+                <span><i style="background:#B8860B"></i>Señal resultante (lo que oyes)</span>
+                <span><i style="background:#4ECDC4"></i>Portadora L</span>
+                <span><i style="background:#9b7fc4"></i>Portadora R</span>
+            </div>
+        </div>
+        <div class="field"><label for="waveType">Tipo de onda</label>
+            <select id="waveType">
+                <option value="alfa">Alfa — relajación / creatividad</option>
+                <option value="beta">Beta — enfoque / alerta</option>
+                <option value="theta">Theta — meditación / intuición</option>
+                <option value="delta">Delta — sueño / regeneración</option>
+            </select>
+        </div>
+        <div class="field"><label for="beatFreq">Frecuencia de onda (Hz)</label><select id="beatFreq"></select></div>
+        <div class="field"><label for="baseFreq">Frecuencia base (Hz)</label>
+            <select id="baseFreq">
+                <option value="200">200 Hz — grave / enraizamiento</option>
+                <option value="300" selected>300 Hz — equilibrada</option>
+                <option value="400">400 Hz — clara / elevada</option>
+            </select>
+        </div>
+        <div class="field"><label for="duration">Duración (min)</label>
+            <input type="number" id="duration" min="17" max="30" value="20" step="1">
+            <div class="hint">Mín. <strong>17 min</strong> para sincronizar el cerebro; máx. <strong>30 min</strong> para no fatigar.</div>
+        </div>
+        <button id="genBtn" class="btn btn-gold">Generar pista binaural</button>
+        <div id="genStatus" class="status s-info"></div>
+        <div class="preview" id="genPreview">
+            <strong>✅ Pista lista:</strong>
+            <audio id="genPlayer" controls></audio>
+            <div class="meta" id="genMeta"></div>
+            <button id="dlPureBtn" class="btn btn-dl">⬇️ Descargar pista pura (sin voz)</button>
+        </div>
+    </div>
+
+    <!-- PASO 2 -->
+    <div class="card" id="card2">
+        <h2>Graba tu sugestión <span class="badge-opt">OPCIONAL</span></h2>
+        <div class="choice">¿Solo ondas? Descargá del paso 1. ¿Con voz? Grabá aquí y mezclá abajo.</div>
+        <div class="script">
+            <h3>📝 Instructivo</h3>
+            <p>Tono calmado, en presente, 10–60 s.</p>
+            <div class="ex">"Mi mente está clara, tranquila y en control."</div>
+            <div class="ex">"Soy capaz, soy suficiente, merezco lo bueno."</div>
+        </div>
+        <div class="timer">
+            <div class="num" id="tNum">00:00</div>
+            <div class="bar"><div id="tBar"></div></div>
+            <div class="msg" id="tMsg">Listo para grabar (10–60 s)</div>
+        </div>
+        <button id="recBtn" class="btn btn-rec">🎙️ Iniciar grabación</button>
+        <div id="recStatus" class="status s-info"></div>
+        <div class="preview" id="recPreview">
+            <strong>✅ Tu voz:</strong>
+            <audio id="recPlayer" controls></audio>
+            <div class="meta" id="recMeta"></div>
+        </div>
+    </div>
+
+    <!-- PASO 3 -->
+    <div class="card" id="card3">
+        <h2>Finaliza tu audio</h2>
+        <div class="choice">La voz se mezcla <strong>15% más rápida</strong> en oído izq. y <strong>15% más lenta</strong> en der., al <strong>50%</strong> del volumen de las ondas.</div>
+        <button id="mixBtn" class="btn btn-mix" disabled>🔀 Mezclar con mi voz y descargar</button>
+        <div id="mixStatus" class="status s-info"></div>
+    </div>
+
+    <!-- Videos -->
+    <h2 style="font-family:'Cinzel',serif;color:var(--secondary);text-align:center;margin:50px 0 0;">📺 Guía en video</h2>
+    <div class="vgrid">
+        <div class="vcard"><div class="vwrap"><iframe src="https://www.youtube.com/embed/VIDEO_1" loading="lazy" allowfullscreen></iframe></div><div class="vinfo"><h3>Tutorial paso a paso</h3><p>Configuración y grabación.</p></div></div>
+        <div class="vcard"><div class="vwrap"><iframe src="https://www.youtube.com/embed/VIDEO_2" loading="lazy" allowfullscreen></iframe></div><div class="vinfo"><h3>La ciencia de las Alfa</h3><p>Por qué 17 minutos.</p></div></div>
+        <div class="vcard"><div class="vwrap"><iframe src="https://www.youtube.com/embed/VIDEO_3" loading="lazy" allowfullscreen></iframe></div><div class="vinfo"><h3>Caso: antes de dormir</h3><p>Delta + sugestión.</p></div></div>
+    </div>
+
+    <!-- Suscripción -->
+    <div class="sub">
+        <h2>Desbloqueá el Laboratorio</h2>
+        <div class="price">$4 <span>USD / mes</span></div>
+        <ul>
+            <li>Pistas de 17 a 30 minutos</li>
+            <li>Grabación y mezcla con tu voz</li>
+            <li>Descarga WAV 44.1 kHz</li>
+            <li>Cancelá cuando quieras</li>
+        </ul>
+        <a href="https://mpago.la/TU_LINK" target="_blank" class="btn-mp">💳 Suscribirse con Mercado Pago</a>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:14px;">Pago seguro por Mercado Pago. El generador se protegerá con tu suscripción en la Fase 3.</p>
+    </div>
+
+</div>
+
+<footer>&copy; 2026 Equilibrioalfa.org — Todos los derechos reservados</footer>
+
+<script>
+/* ===================== ESTADO ===================== */
+const S={binBuf:null,binBlob:null,binName:'',voiceBuf:null,voiceDur:0,rec:null,chunks:[],recOn:false,t0:0,timer:null};
+const CFG={alfa:[8,10,12],beta:[15,20,30],theta:[4,6,8],delta:[0.2,0.5,2]};
+const $=id=>document.getElementById(id);
+
+/* ===================== STEPPER ===================== */
+function setStep(n){
+  document.querySelectorAll('.step').forEach(s=>{const k=+s.dataset.step;s.classList.toggle('active',k===n);s.classList.toggle('done',k<n);});
+  document.querySelectorAll('.step-line').forEach((l,i)=>l.classList.toggle('fill',i<n-1));
+}
+
+/* ===================== VISUALIZADOR ===================== */
+const cv=$('waveCanvas'),cx=cv.getContext('2d');let phase=0,raf;
+function sizeCanvas(){const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=120*devicePixelRatio;cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}
+function draw(){
+  const w=cv.width/devicePixelRatio,h=120,mid=h/2;
+  cx.clearRect(0,0,w,h);
+  const beat=parseFloat($('beatFreq').value)||12;
+  const cL=4, cR=4+beat/2; // ciclos visuales (escala didáctica)
+  // portadoras tenues
+  cx.lineWidth=1.2;cx.globalAlpha=.35;
+  cx.strokeStyle='#4ECDC4';cx.beginPath();for(let x=0;x<=w;x++){const p=(x/w)*cL*6.283+phase;cx.lineTo(x,mid+Math.sin(p)*h*0.32);}cx.stroke();
+  cx.strokeStyle='#9b7fc4';cx.beginPath();for(let x=0;x<=w;x++){const p=(x/w)*cR*6.283+phase;cx.lineTo(x,mid+Math.sin(p)*h*0.32);}cx.stroke();
+  // resultante
+  cx.globalAlpha=1;cx.lineWidth=2.4;cx.strokeStyle='#B8860B';cx.beginPath();
+  for(let x=0;x<=w;x++){const pL=(x/w)*cL*6.283+phase,pR=(x/w)*cR*6.283+phase;cx.lineTo(x,mid+(Math.sin(pL)+Math.sin(pR))*h*0.16);}cx.stroke();
+  phase+=0.03;raf=requestAnimationFrame(draw);
+}
+function stopViz(){cancelAnimationFrame(raf);}
+
+/* ===================== SELECTS ===================== */
+function fillBeats(){const f=CFG[$('waveType').value];$('beatFreq').innerHTML=f.map(v=>`<option value="${v}">${v} Hz</option>`).join('');}
+$('waveType').addEventListener('change',()=>{fillBeats();});
+fillBeats();
+
+/* ===================== WAV ===================== */
+function toWav(b,len){const n=b.numberOfChannels,L=len*n*2+44,buf=new ArrayBuffer(L),v=new DataView(buf);let ch=[],i,s,off=0,p=0;
+ const u16=d=>{v.setUint16(p,d,true);p+=2},u32=d=>{v.setUint32(p,d,true);p+=4};
+ u32(0x46464952);u32(L-8);u32(0x45564157);u32(0x20746d66);u32(16);u16(1);u16(n);u32(b.sampleRate);u32(b.sampleRate*2*n);u16(n*2);u16(16);u32(0x61746164);u32(L-p-4);
+ for(i=0;i<n;i++)ch.push(b.getChannelData(i));
+ while(p<L){for(i=0;i<n;i++){s=Math.max(-1,Math.min(1,ch[i][off]));s=(0.5+s<0?s*32768:s*32767)|0;v.setInt16(p,s,true);p+=2;}off++;}
+ return new Blob([buf],{type:'audio/wav'});}
+
+/* ===================== PASO 1 ===================== */
+$('genBtn').addEventListener('click',async()=>{
+  const beat=+($('beatFreq').value),base=+$('baseFreq').value,min=+$('duration').value;
+  const name=$('waveType').value[0].toUpperCase()+$('waveType').value.slice(1);
+  $('genBtn').disabled=true;$('genStatus').textContent='Renderizando ondas…';$('genStatus').className='status s-info';
+  stopViz();
+  try{
+    const sr=44100,sec=min*60,o=new OfflineAudioContext(2,sr*sec,sr),g=o.createGain();g.connect(o.destination);
+    g.gain.setValueAtTime(0,0);g.gain.linearRampToValueAtTime(.5,2);g.gain.setValueAtTime(.5,sec-2);g.gain.linearRampToValueAtTime(0,sec);
+    const oL=o.createOscillator(),pL=o.createStereoPanner();oL.type='sine';oL.frequency.value=base;pL.pan.value=-1;oL.connect(pL).connect(g);
+    const oR=o.createOscillator(),pR=o.createStereoPanner();oR.type='sine';oR.frequency.value=base+beat;pR.pan.value=1;oR.connect(pR).connect(g);
+    oL.start();oR.start();oL.stop(sec);oR.stop(sec);
+    const buf=await o.startRendering();S.binBuf=buf;S.binName=`${name}_${beat}Hz_${base}_${min}min.wav`;
+    S.binBlob=toWav(buf,buf.length);
+    $('genPlayer').src=URL.createObjectURL(S.binBlob);
+    $('genMeta').textContent=`${S.binName} · ${min} min · 44.1 kHz · estéreo`;
+    $('genPreview').classList.add('show');
+    $('genStatus').textContent='✅ Pista generada.';$('genStatus').className='status s-ok';
+    setStep(2);refreshMix();
+  }catch(e){console.error(e);$('genStatus').textContent='❌ Error (memoria del navegador).';$('genStatus').className='status s-err';}
+  finally{$('genBtn').disabled=false;}
+});
+$('dlPureBtn').addEventListener('click',()=>{if(!S.binBlob)return;const a=document.createElement('a');a.href=URL.createObjectURL(S.binBlob);a.download=S.binName;a.click();URL.revokeObjectURL(a.href);$('genStatus').textContent='✅ Descargado: '+S.binName;$('genStatus').className='status s-ok';});
+
+/* ===================== PASO 2 ===================== */
+$('recBtn').addEventListener('click',async()=>{S.recOn?stopRec():await startRec();});
+async function startRec(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    S.rec=new MediaRecorder(st);S.chunks=[];
+    S.rec.ondataavailable=e=>S.chunks.push(e.data);
+    S.rec.onstop=async()=>{
+      const blob=new Blob(S.chunks,{type:'audio/wav'});const ab=await blob.arrayBuffer();
+      const ac=new AudioContext();S.voiceBuf=await ac.decodeAudioData(ab);S.voiceDur=S.voiceBuf.duration;
+      $('recPlayer').src=URL.createObjectURL(blob);$('recMeta').textContent=`Duración: ${S.voiceDur.toFixed(1)} s`;
+      $('recPreview').classList.add('show');st.getTracks().forEach(t=>t.stop());
+      if(S.voiceDur<10){$('recStatus').textContent=`⚠️ ${S.voiceDur.toFixed(1)}s — mínimo 10s.`;$('recStatus').className='status s-err';}
+      else if(S.voiceDur>60){$('recStatus').textContent=`⚠️ ${S.voiceDur.toFixed(1)}s — máximo 60s.`;$('recStatus').className='status s-err';}
+      else{$('recStatus').textContent=`✅ Voz válida: ${S.voiceDur.toFixed(1)}s.`;$('recStatus').className='status s-ok';}
+      refreshMix();
+    };
+    S.rec.start();S.recOn=true;S.t0=Date.now();
+    $('recBtn').textContent='⏹️ Detener';$('recBtn').classList.add('rec');
+    $('recStatus').textContent='🔴 Grabando… habla ahora.';$('recStatus').className='status s-info';
+    S.timer=setInterval(tick,100);
+  }catch(e){$('recStatus').textContent='❌ Sin acceso al micrófono.';$('recStatus').className='status s-err';}
+}
+function stopRec(){if(S.rec&&S.rec.state!=='inactive')S.rec.stop();S.recOn=false;clearInterval(S.timer);$('recBtn').textContent='🎙️ Iniciar grabación';$('recBtn').classList.remove('rec');}
+function tick(){const e=(Date.now()-S.t0)/1000,m=Math.floor(e/60),s=Math.floor(e%60);
+  $('tNum').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  $('tBar').style.width=Math.min(e/60*100,100)+'%';
+  if(e>=60){$('tMsg').textContent='⏱️ Máximo 60s.';stopRec();}
+  else if(e>=10){$('tMsg').textContent='✅ Duración válida.';}
+  else{$('tMsg').textContent=`⏳ Faltan ${Math.ceil(10-e)}s para el mínimo.`;}
+}
+
+/* ===================== PASO 3 ===================== */
+$('mixBtn').addEventListener('click',async()=>{
+  if(!S.binBuf||!S.voiceBuf)return;
+  $('mixBtn').disabled=true;$('mixStatus').textContent='🔀 Mezclando…';$('mixStatus').className='status s-info';
+  try{
+    const dur=S.binBuf.duration,sr=S.binBuf.sampleRate,o=new OfflineAudioContext(2,dur*sr,sr);
+    const bs=o.createBufferSource();bs.buffer=S.binBuf;const bg=o.createGain();bg.gain.value=1;bs.connect(bg).connect(o.destination);
+    const vL=o.createBufferSource();vL.buffer=S.voiceBuf;vL.playbackRate.value=1.15;const gL=o.createGain();gL.gain.value=.5;const mL=o.createChannelMerger(2);vL.connect(gL).connect(mL,0,0);mL.connect(o.destination);
+    const vR=o.createBufferSource();vR.buffer=S.voiceBuf;vR.playbackRate.value=.85;const gR=o.createGain();gR.gain.value=.5;const mR=o.createChannelMerger(2);vR.connect(gR).connect(mR,0,1);mR.connect(o.destination);
+    bs.start();vL.start();vR.start();
+    const out=await o.startRendering();const blob=toWav(out,out.length);
+    const fn=`Equilibrioalfa_${S.binName.replace('.wav','')}_conVoz.wav`;
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();URL.revokeObjectURL(a.href);
+    $('mixStatus').textContent='✅ Descargado: '+fn;$('mixStatus').className='status s-ok';setStep(3);
+  }catch(e){console.error(e);$('mixStatus').textContent='❌ Error al mezclar.';$('mixStatus').className='status s-err';}
+  finally{refreshMix();}
+});
+function refreshMix(){const ok=S.binBuf&&S.voiceBuf&&S.voiceDur>=10&&S.voiceDur<=60;$('mixBtn').disabled=!ok;$('mixBtn').textContent=ok?'🔀 Mezclar con mi voz y descargar':'🔀 Mezclar (graba tu voz primero)';}
+
+/* ===================== INIT ===================== */
+window.addEventListener('resize',sizeCanvas);
+sizeCanvas();draw();
+</script>
+</body>
+</html>
