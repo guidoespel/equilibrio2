@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     try {
         const { nombre, email, fechaNacimiento, pais } = req.body;
 
-        // 1. Validación básica
+        // Validación
         if (!nombre || !email || !fechaNacimiento || !pais) {
             return res.status(400).json({ error: 'Todos los campos son obligatorios' });
         }
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Edad fuera de rango válido' });
         }
 
-        // 2. Verificar duplicados en Supabase
+        // Verificar duplicados
         const { data: existente } = await supabase
             .from('suscriptores')
             .select('id')
@@ -46,8 +46,8 @@ export default async function handler(req, res) {
             });
         }
 
-        // 3. Insertar en Supabase
-        const { data: nuevoSuscriptor, error: errorInsercion } = await supabase
+        // Insertar
+        const { data: nuevo, error: errIns } = await supabase
             .from('suscriptores')
             .insert([{
                 nombre: nombre.trim(),
@@ -60,25 +60,25 @@ export default async function handler(req, res) {
             .select()
             .single();
 
-        if (errorInsercion) {
-            if (errorInsercion.code === '23505') { // Unique violation
-                return res.status(409).json({ error: 'Este email ya está registrado' });
+        if (errIns) {
+            if (errIns.code === '23505') {
+                return res.status(409).json({ error: 'Email ya registrado' });
             }
             throw new Error('Error al guardar en base de datos');
         }
 
-        // 4. Enviar Email con PDFs adjuntos (Lectura local a Base64)
+        // Enviar email con PDFs
         try {
-            const pdf1Path = path.join(process.cwd(), 'public', 'libro1-alquimia-interior.pdf');
-            const pdf2Path = path.join(process.cwd(), 'public', 'libro2-mente-maestra.pdf');
+            const pdf1Path = path.join(process.cwd(), 'Libro1-Alquimia-Interior.pdf');
+            const pdf2Path = path.join(process.cwd(), 'Libro2-mente-maestra.pdf');
 
             const pdf1Content = fs.readFileSync(pdf1Path).toString('base64');
             const pdf2Content = fs.readFileSync(pdf2Path).toString('base64');
 
             await resend.emails.send({
-                from: 'Equilibrio <onboarding@resend.dev>', // Cambiar a 'contacto@equilibrio.org' cuando verifiques el dominio en Resend
+                from: 'Equilibrioalfa <onboarding@resend.dev>',
                 to: email,
-                subject: '¡Bienvenido a Equilibrio! Tus libros te esperan 📚',
+                subject: '¡Bienvenido a Equilibrioalfa! Tus libros te esperan 📚',
                 html: generarHTMLBienvenida(nombre),
                 attachments: [
                     { filename: 'La-Alquimia-Interior.pdf', content: pdf1Content },
@@ -86,20 +86,18 @@ export default async function handler(req, res) {
                 ]
             });
 
-            // 5. Marcar como enviado
             await supabase
                 .from('suscriptores')
                 .update({ email_enviado: true })
-                .eq('id', nuevoSuscriptor.id);
+                .eq('id', nuevo.id);
 
         } catch (emailError) {
             console.error('Error enviando email:', emailError);
-            // No fallamos la petición si el email falla, el usuario ya está registrado.
         }
 
         return res.status(200).json({ 
             success: true, 
-            mensaje: '¡Suscripción exitosa! Revisa tu email en los próximos minutos.' 
+            mensaje: '¡Suscripción exitosa! Revisa tu email.' 
         });
 
     } catch (error) {
@@ -113,32 +111,26 @@ function calcularEdad(fechaNacimiento) {
     const nacimiento = new Date(fechaNacimiento);
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
     const mes = hoy.getMonth() - nacimiento.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
-        edad--;
-    }
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
     return edad;
 }
 
 function generarHTMLBienvenida(nombre) {
     return `
     <div style="font-family: Georgia, serif; color: #2C2C2C; line-height: 1.7; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #1B3A57;">¡Bienvenido a Equilibrio, ${nombre}!</h1>
+        <h1 style="color: #1B3A57;">¡Bienvenido a Equilibrioalfa, ${nombre}!</h1>
         <p>Gracias por unirte a nuestra comunidad de transformación personal.</p>
         <p>Adjunto encontrarás <strong>dos libros completos</strong> en formato PDF:</p>
-        
         <div style="background: #FAF8F5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #B8860B;">
-            <h3 style="color: #1B3A57; margin-top: 0;">⚗️ La Alquimia Interior</h3>
-            <p>Un recorrido por el cuerpo, la mente y el espíritu a través de las tradiciones esotéricas.</p>
+            <h3 style="color: #1B3A57;">⚗️ La Alquimia Interior</h3>
+            <p>Un recorrido por el cuerpo, la mente y el espíritu.</p>
         </div>
-        
         <div style="background: #FAF8F5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #B8860B;">
-            <h3 style="color: #1B3A57; margin-top: 0;">🧠 El Arte de la Mente Maestra</h3>
+            <h3 style="color: #1B3A57;">🧠 El Arte de la Mente Maestra</h3>
             <p>Programación Neurolingüística: Herramientas para Reprogramar tu Realidad.</p>
         </div>
-
-        <p>Si tienes alguna pregunta, no dudes en responder a este email.</p>
-        <p>Un abrazo,<br><strong>El equipo de Equilibrio.org</strong></p>
+        <p>Un abrazo,<br><strong>Equilibrioalfa.org</strong></p>
         <hr style="margin: 40px 0; border: none; border-top: 1px solid #E0D8C8;">
-        <p style="font-size: 12px; color: #666; text-align: center;">© 2026 Equilibrio.org</p>
+        <p style="font-size: 12px; color: #666; text-align: center;">© 2026 Equilibrioalfa.org</p>
     </div>`;
 }

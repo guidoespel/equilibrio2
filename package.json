@@ -1,0 +1,9 @@
+{
+  "name": "equilibrioalfa",
+  "version": "1.0.0",
+  "description": "Equilibrioalfa.org - Transformación personal",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "resend": "^3.2.0"
+  }
+}
