@@ -20,47 +20,53 @@ document.querySelectorAll('.nav-menu a').forEach(link => {
 // FORMULARIO DE DESCARGA
 // ========================================
 
-const downloadForm = document.getElementById('downloadForm');
-const successMessage = document.getElementById('successMessage');
+document.addEventListener('DOMContentLoaded', () => {
+    const downloadForm = document.getElementById('downloadForm');
+    const successMessage = document.getElementById('successMessage');
 
-downloadForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // Obtener datos del formulario
-    const formData = {
-        nombre: document.getElementById('nombre').value,
-        email: document.getElementById('email').value,
-        fechaNacimiento: document.getElementById('fechaNacimiento').value,
-        pais: document.getElementById('pais').value,
-        timestamp: new Date().toISOString()
-    };
-    
-    // Calcular edad
-    const edad = calcularEdad(formData.fechaNacimiento);
-    formData.edad = edad;
-    
-    try {
-        // OPCIÓN 1: Enviar a Google Sheets (GRATIS)
-        await enviarAGoogleSheets(formData);
-        
-        // OPCIÓN 2: Enviar a tu backend propio
-        // await fetch('/api/download', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(formData)
-        // });
-        
-        // Mostrar mensaje de éxito
-        downloadForm.style.display = 'none';
-        successMessage.style.display = 'block';
-        
-        // Aquí se enviaría el email automáticamente
-        // (ver sección de configuración de emails)
-        
-    } catch (error) {
-        alert('Hubo un error al procesar tu solicitud. Por favor intenta nuevamente.');
-        console.error(error);
-    }
+    // Si no existe el formulario en esta página, no hacemos nada
+    if (!downloadForm) return;
+
+    downloadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = downloadForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Enviando...';
+        submitBtn.disabled = true;
+
+        const formData = {
+            nombre: document.getElementById('nombre').value,
+            email: document.getElementById('email').value,
+            fechaNacimiento: document.getElementById('fechaNacimiento').value,
+            pais: document.getElementById('pais').value,
+        };
+
+        try {
+            const response = await fetch('/api/suscribir', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Error al procesar la solicitud');
+            }
+
+            downloadForm.style.display = 'none';
+            if (successMessage) successMessage.style.display = 'block';
+            alert('¡Gracias! Revisá tu email para descargar los libros.');
+
+        } catch (error) {
+            alert(error.message || 'Hubo un error. Intentá nuevamente.');
+            console.error(error);
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    });
 });
 
 function calcularEdad(fechaNacimiento) {
