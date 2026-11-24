@@ -1,7 +1,10 @@
-import { supabase } from '../lib/supabase.js';
-import { resend } from '../lib/resend.js';
+import { createClient } from '@supabase/supabase-js';
+import { Resend } from 'resend';
 import fs from 'fs';
 import path from 'path';
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -11,7 +14,6 @@ export default async function handler(req, res) {
     try {
         const { nombre, email, fechaNacimiento, pais } = req.body;
 
-        // Validación
         if (!nombre || !email || !fechaNacimiento || !pais) {
             return res.status(400).json({ error: 'Todos los campos son obligatorios' });
         }
