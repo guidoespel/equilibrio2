@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import fs from 'fs';
+import path from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -71,8 +73,42 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Error al guardar en base de datos' });
     }
 
+    // Leer los PDFs y adjuntarlos
+    let attachments = [];
     try {
-      await resend.emails.send({
+      const basePath = process.cwd();
+      console.log('Base path:', basePath);
+
+      const pdf1Path = path.join(basePath, 'Libro1-Alquimia-Interior.pdf');
+      const pdf2Path = path.join(basePath, 'Libro2-mente-maestra.pdf');
+
+      console.log('PDF1 existe:', fs.existsSync(pdf1Path));
+      console.log('PDF2 existe:', fs.existsSync(pdf2Path));
+
+      if (fs.existsSync(pdf1Path)) {
+        const pdf1Content = fs.readFileSync(pdf1Path).toString('base64');
+        attachments.push({
+          filename: 'La-Alquimia-Interior.pdf',
+          content: pdf1Content
+        });
+      }
+
+      if (fs.existsSync(pdf2Path)) {
+        const pdf2Content = fs.readFileSync(pdf2Path).toString('base64');
+        attachments.push({
+          filename: 'El-Arte-de-la-Mente-Maestra.pdf',
+          content: pdf2Content
+        });
+      }
+
+      console.log('Attachments count:', attachments.length);
+    } catch (pdfError) {
+      console.error('Error leyendo PDFs:', pdfError);
+    }
+
+    // Enviar email con PDFs adjuntos
+    try {
+      const emailResult = await resend.emails.send({
         from: 'Equilibrioalfa <onboarding@resend.dev>',
         to: emailLimpio,
         subject: '¡Bienvenido a Equilibrioalfa! Tus libros te esperan 📚',
@@ -80,11 +116,24 @@ export default async function handler(req, res) {
           <div style="font-family: Georgia, serif; color: #2C2C2C; line-height: 1.7; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #1B3A57;">¡Bienvenido a Equilibrioalfa, ${nombre}!</h1>
             <p>Gracias por unirte a nuestra comunidad de transformación personal.</p>
-            <p>Pronto recibirás los libros en tu correo.</p>
+            <p>Adjunto encontrarás <strong>dos libros completos</strong> en formato PDF:</p>
+            <div style="background: #FAF8F5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #B8860B;">
+              <h3 style="color: #1B3A57;">⚗️ La Alquimia Interior</h3>
+              <p>Un recorrido por el cuerpo, la mente y el espíritu.</p>
+            </div>
+            <div style="background: #FAF8F5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #B8860B;">
+              <h3 style="color: #1B3A57;">🧠 El Arte de la Mente Maestra</h3>
+              <p>Programación Neurolingüística: Herramientas para Reprogramar tu Realidad.</p>
+            </div>
             <p>Un abrazo,<br><strong>Equilibrioalfa.org</strong></p>
+            <hr style="margin: 40px 0; border: none; border-top: 1px solid #E0D8C8;">
+            <p style="font-size: 12px; color: #666; text-align: center;">© 2026 Equilibrioalfa.org</p>
           </div>
-        `
+        `,
+        attachments: attachments
       });
+
+      console.log('Email enviado:', emailResult);
 
       await supabase
         .from('suscriptores')
